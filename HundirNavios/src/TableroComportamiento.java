@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 public class TableroComportamiento {
 
-
     public void crearTablero(String[][] tablero){
         for (String[] strings : tablero) {
             Arrays.fill(strings, "▒");
@@ -46,7 +45,6 @@ public class TableroComportamiento {
             return "barco";
         }
     }
-    //hola
 
     public void comprobarVictoria(String[][]tablero, int cantidaBarcos, String barco, DataOutputStream dataOutputStream, Socket socket) throws IOException {
         int cantidadBarcoEncontrado = 0;

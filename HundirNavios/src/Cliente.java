@@ -5,16 +5,14 @@ import java.util.Scanner;
 public class Cliente{
 
     static TableroComportamiento tableroComportamiento = new TableroComportamiento();
-
     static String[][] tableroBarcos;
     static String[][] tableroEnemigo;
-
-    //pedir datos por pantalla
     static BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
     static Scanner scanner = new Scanner(System.in);
     static String direccion = "";
     static int cantidadBarcos = 0;
     static int cantidadBarcosEnemigos = 0;
+    static boolean volverAtacar;
 
     public static void main(String args[]) throws IOException {
 
@@ -41,6 +39,11 @@ public class Cliente{
         tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
         tableroComportamiento.verTablero(tableroBarcos, "Tu");
 
+        ColocarBarco(3, "█");
+
+        tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
+        tableroComportamiento.verTablero(tableroBarcos, "Tu");
+
         try{
             Socket socket = new Socket(url, port);
 
@@ -59,33 +62,53 @@ public class Cliente{
             System.out.println();
 
             while (true){
-                //Atacando
-                System.out.print("Donde quieres atacar ↕ : ");
-                movimientoY = bufferedReader.readLine();
-                dataOutputStream.writeUTF(movimientoY);
+                do{
+                    //Atacando
+                    System.out.print("Donde quieres atacar ↕ : ");
+                    movimientoY = bufferedReader.readLine();
+                    dataOutputStream.writeUTF(movimientoY);
 
-                System.out.print("Donde quieres atacar ↔ : ");
-                movimientoX = bufferedReader.readLine();
-                dataOutputStream.writeUTF(movimientoX);
+                    System.out.print("Donde quieres atacar ↔ : ");
+                    movimientoX = bufferedReader.readLine();
+                    dataOutputStream.writeUTF(movimientoX);
 
-                resultado = dataInputStream.readUTF();
-                System.out.println("Has tocado en: " + resultado);
-                tableroComportamiento.verDondeAtaco(tableroEnemigo, resultado, movimientoY,movimientoX);
-                dataOutputStream.flush();
+                    resultado = dataInputStream.readUTF();
+                    System.out.println("Has tocado en: " + resultado);
+                    tableroComportamiento.verDondeAtaco(tableroEnemigo, resultado, movimientoY, movimientoX);
+                    tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
+                    tableroComportamiento.verTablero(tableroBarcos, "Tu");
 
-                tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
-                tableroComportamiento.verTablero(tableroBarcos, "Tu");
+                    if(resultado.equals("agua")){
+                        volverAtacar = false;
+                    }else {
+                        volverAtacar = true;
+                        System.out.println("Vueve a atacar");
+                    }
 
-                //Atacado
-                //Leo el mensaje que me envia
-                ataqueY = dataInputStream.readUTF();
-                //Leo el mensaje que me envia
-                ataqueX = dataInputStream.readUTF();
-                //Le envio un mensaje
-                dataOutputStream.writeUTF(tableroComportamiento.verDondeAtacan(tableroBarcos, ataqueY, ataqueX));
+                    dataOutputStream.flush();
+                }while (volverAtacar);
 
-                tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
-                tableroComportamiento.verTablero(tableroBarcos, "Tu");
+                do {
+                    //Atacado
+                    //Leo el mensaje que me envia
+                    ataqueY = dataInputStream.readUTF();
+                    //Leo el mensaje que me envia
+                    ataqueX = dataInputStream.readUTF();
+                    //Le envio un mensaje
+                    String tocado = tableroComportamiento.verDondeAtacan(tableroBarcos, ataqueY, ataqueX);
+                    dataOutputStream.writeUTF(tocado);
+
+                    tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
+                    tableroComportamiento.verTablero(tableroBarcos, "Tu");
+
+                    if(tocado.equals("agua")){
+                        volverAtacar = false;
+                    }else {
+                        volverAtacar = true;
+                        System.out.println("Te han detectado");
+                    }
+
+                }while (volverAtacar);
             }
         }
         catch(IOException e){
@@ -98,75 +121,127 @@ public class Cliente{
 
         cantidadBarcos += lonngitudBarco;
 
-        System.out.print("Posicion en vertical donde quieres poner el barco: ");
-        colocarY = scanner.nextInt();
+        do {
+            do {
+                System.out.print("Posicion en vertical donde quieres poner el barco: ");
+                colocarY = scanner.nextInt();
+                if(colocarY < 0 || colocarY >= tableroBarcos.length){
+                    System.out.println("No puedes salir del mar D: \n");
+                }
+            }while (colocarY < 0 || colocarY >= tableroBarcos.length);
 
-        System.out.print("Posicion en horizontal donde quieres poner el barco: ");
-        colocarX = scanner.nextInt();
+            do{
+                System.out.print("Posicion en horizontal donde quieres poner el barco: ");
+                colocarX = scanner.nextInt();
+                if(colocarX < 0 || colocarX >= tableroBarcos.length){
+                    System.out.println("No puedes salir del mar D: \n");
+                }
+            }while (colocarX < 0 || colocarX >= tableroBarcos.length);
+
+            if(tableroBarcos[colocarY][colocarX].equals(imagenBarco)){
+                System.out.println("Ya hay un barco en ese lugar \n");
+            }
+        }while (tableroBarcos[colocarY][colocarX].equals(imagenBarco));
+
         tableroBarcos[colocarY][colocarX] = imagenBarco;
 
         direccionBarco(lonngitudBarco, imagenBarco, colocarY, colocarX);
+        System.out.println();
     }
 
     private static void direccionBarco(int longitudBarco, String imagenBarco, int colocarY, int colocarX) throws IOException {
         boolean correcto = false;
+        boolean trapasado = false;
 
         while (!correcto) {
+            trapasado = false;
             System.out.println("1.Arriba 2.Derecha 3.Abajo 4. Izquierda");
             System.out.print("Hacia donde quieres que mire el barco: ");
             direccion = bufferedReader.readLine();
 
             switch (direccion) {
                 case "1" -> {
-                    if (colocarY - longitudBarco + 1 >= 0) {
-                        System.out.println("has elegido que el barco mire para arriba");
-                        for (int i = 0; i < longitudBarco; i++) {
-                            tableroBarcos[colocarY - i][colocarX] = imagenBarco;
+                    if (colocarY - longitudBarco + 1 >= 0 && !trapasado) {
+                        for (int i = 1; i < longitudBarco; i++){
+                            if (tableroBarcos[colocarY - i][colocarX].equals(imagenBarco)) {
+                                trapasado = true;
+                                System.out.println("No puedes atravesar otro buque \n");
+                                break;
+                            }
                         }
-                        correcto = true;
+                        if(!trapasado){
+                            System.out.println("has elegido que el barco mire para arriba");
+                            for (int i = 0; i < longitudBarco; i++) {
+                                tableroBarcos[colocarY - i][colocarX] = imagenBarco;
+                            }
+                            correcto = true;
+                        }
                     } else {
-                        System.out.println("No puedes salir del mar D:");
-                        System.out.println();
+                        System.out.println("No puedes salir del mar D: \n");
                     }
                 }
                 case "2" -> {
                     if (colocarX + longitudBarco <= tableroBarcos[colocarY].length) {
-                        System.out.println("has elegido que el barco mire para la derecha");
-                        for (int i = 0; i < longitudBarco; i++) {
-                            tableroBarcos[colocarY][colocarX + i] = imagenBarco;
+                        for (int i = 1; i < longitudBarco; i++){
+                            if (tableroBarcos[colocarY][colocarX + i].equals(imagenBarco)) {
+                                trapasado = true;
+                                System.out.println("No puedes atravesar otro buque \n");
+                                break;
+                            }
                         }
-                        correcto = true;
+                        if(!trapasado){
+                            System.out.println("has elegido que el barco mire para la derecha");
+                            for (int i = 0; i < longitudBarco; i++) {
+                                tableroBarcos[colocarY][colocarX + i] = imagenBarco;
+                            }
+                            correcto = true;
+                        }
                     } else {
-                        System.out.println("No puedes salir del mar D:");
-                        System.out.println();
+                        System.out.println("No puedes salir del mar D: \n");
                     }
                 }
                 case "3" -> {
                     if (colocarY + longitudBarco <= tableroBarcos.length) {
-                        System.out.println("has elegido que el barco mire para abajo");
-                        for (int i = 0; i < longitudBarco; i++) {
-                            tableroBarcos[colocarY + i][colocarX] = imagenBarco;
+                        for (int i = 1; i < longitudBarco; i++){
+                            if (tableroBarcos[colocarY + i][colocarX].equals(imagenBarco)) {
+                                trapasado = true;
+                                System.out.println("No puedes atravesar otro buque \n");
+                                break;
+                            }
                         }
-                        correcto = true;
+                        if(!trapasado){
+                            System.out.println("has elegido que el barco mire para abajo");
+                            for (int i = 0; i < longitudBarco; i++) {
+                                tableroBarcos[colocarY + i][colocarX] = imagenBarco;
+                            }
+                            correcto = true;
+                        }
                     } else {
-                        System.out.println("No puedes salir del mar D:");
-                        System.out.println();
+                        System.out.println("No puedes salir del mar D: \n");
                     }
                 }
                 case "4" -> {
                     if (colocarX - longitudBarco + 1 >= 0) {
-                        System.out.println("has elegido que el barco mire para la izquierda");
-                        for (int i = 0; i < longitudBarco; i++) {
-                            tableroBarcos[colocarY][colocarX - i] = imagenBarco;
+                        for (int i = 1; i < longitudBarco; i++){
+                            if (tableroBarcos[colocarY][colocarX - i].equals(imagenBarco)) {
+                                trapasado = true;
+                                System.out.println("No puedes atravesar otro buque \n");
+                                break;
+                            }
                         }
-                        correcto = true;
+                        if(!trapasado){
+                            System.out.println("has elegido que el barco mire para la izquierda");
+                            for (int i = 0; i < longitudBarco; i++) {
+                                tableroBarcos[colocarY][colocarX - i] = imagenBarco;
+                            }
+                            correcto = true;
+                        }
                     } else {
-                        System.out.println("No puedes salir del mar D:");
-                        System.out.println();
+                        System.out.println("No puedes salir del mar D: \n");
                     }
                 }
                 default -> {
-                    System.out.println("Esta direccion no existe elija de nuevo");
+                    System.out.println("Esta direccion no existe elija de nuevo \n");
                 }
             }
         }
