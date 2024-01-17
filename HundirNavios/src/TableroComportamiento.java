@@ -55,15 +55,15 @@ public class TableroComportamiento {
                 if(tablero[i][z].equals(barco)){
                     cantidadBarcoEncontrado++;
                 }
-
-                if(cantidadBarcoEncontrado == cantidaBarcos){
-                    System.out.println("Has ganado");
-                    dataOutputStream.writeUTF("Has perdido");
-                    socket.close();
-                }else{
-                    dataOutputStream.writeUTF("Sigue la partida");
-                }
             }
+        }
+        if(cantidadBarcoEncontrado == cantidaBarcos){
+            System.out.println("Has ganado");
+            dataOutputStream.writeUTF("Has perdido");
+            socket.close();
+            System.exit(-1);
+        }else{
+            dataOutputStream.writeUTF("Sigue la partida");
         }
     }
 }

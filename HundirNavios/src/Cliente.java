@@ -78,6 +78,8 @@ public class Cliente{
                     tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
                     tableroComportamiento.verTablero(tableroBarcos, "Tu");
 
+                    tableroComportamiento.comprobarVictoria(tableroEnemigo, cantidadBarcosEnemigos, "█", dataOutputStream, socket);
+
                     if(resultado.equals("agua")){
                         volverAtacar = false;
                     }else {
@@ -100,6 +102,13 @@ public class Cliente{
 
                     tableroComportamiento.verTablero(tableroEnemigo, "Enemigo");
                     tableroComportamiento.verTablero(tableroBarcos, "Tu");
+
+                    resultadoPartida = dataInputStream.readUTF();
+                    if(resultadoPartida.equals("Has perdido")){
+                        System.out.println(resultadoPartida);
+                        socket.close();
+                        System.exit(-1);
+                    }
 
                     if(tocado.equals("agua")){
                         volverAtacar = false;
